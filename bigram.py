@@ -7,7 +7,7 @@ batch_size = 32 # how many independent sequences will we process in parallel?
 block_size = 8 # what is the maximum context length for predictions?
 max_iters = 3000
 eval_interval = 300
-learning_rate = 1e-2
+learning_rate = 1e-2 # higher rate to converge faster for such a small model
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 eval_iters = 200
 # ------------
@@ -40,10 +40,10 @@ def get_batch(split):
     ix = torch.randint(len(data) - block_size, (batch_size,))
     x = torch.stack([data[i:i+block_size] for i in ix])
     y = torch.stack([data[i+1:i+block_size+1] for i in ix])
-    x, y = x.to(device), y.to(device)
+    x, y = x.to(device), y.to(device) # moved to device on creation 
     return x, y
 
-@torch.no_grad()
+@torch.no_grad()  # loss calculation dont need to influence gradients
 def estimate_loss():
     out = {}
     model.eval()
@@ -103,7 +103,7 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
 for iter in range(max_iters):
 
-    # every once in a while evaluate the loss on train and val sets
+    # every once in a while evaluate the loss on train and val sets. interval is set to 300, so 10 times loss between 0 to 3000 iterations
     if iter % eval_interval == 0:
         losses = estimate_loss()
         print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
